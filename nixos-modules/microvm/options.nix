@@ -422,6 +422,14 @@ in
       description = "Extra arguments to pass to qemu.";
     };
 
+    qemu.memfdExtraArgs = mkOption {
+      type = with types; str;
+      default = "";
+      description = ''
+        Extra arguments to pass to qemu's memfd backend  definition.
+      '';
+    };
+
     qemu.serialConsole = mkOption {
       type = types.bool;
       default = true;

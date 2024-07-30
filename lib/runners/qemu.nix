@@ -39,7 +39,7 @@ let
     pkgs.qemu_kvm else pkgs.buildPackages.qemu_full);
 
   inherit (microvmConfig) hostName cpu vcpu mem balloonMem user interfaces shares socket forwardPorts devices vsock graphics storeOnDisk kernel initrdPath storeDisk;
-  inherit (microvmConfig.qemu) machine extraArgs serialConsole;
+  inherit (microvmConfig.qemu) machine extraArgs serialConsole memfdExtraArgs;
 
   inherit (import ../. { nixpkgs-lib = pkgs.lib; }) withDriveLetters;
 
@@ -149,7 +149,7 @@ let
 in {
   inherit tapMultiQueue;
 
-  command = lib.escapeShellArgs (
+  command = let tmp = lib.escapeShellArgs (
     [
       "${qemu}/bin/qemu-system-${arch}"
       "-name" hostName
@@ -206,8 +206,9 @@ in {
       [ "-drive" "id=vd${letter},format=raw,file=${image},if=none,aio=io_uring,discard=unmap" "-device" "virtio-blk-${devType},drive=vd${letter}" ]
     ) volumes ++
     lib.optionals (shares != []) (
-      [
-        "-object" "memory-backend-memfd,id=mem,size=${toString (mem + balloonMem)}M,share=on"
+      [ 
+        "-object" ("memory-backend-memfd,id=mem,size=${toString (mem + balloonMem)}M,share=on" +
+          (if (memfdExtraArgs != "") then ("," + memfdExtraArgs) else ""))
         "-numa" "node,memdev=mem"
       ] ++
       builtins.concatMap ({ proto, index, socket, source, tag, securityModel, ... }: {
@@ -288,7 +289,7 @@ in {
     ]
     ++
     extraArgs
-  );
+  ); in builtins.trace (">>>command = " + (builtins.toString tmp)) tmp;
 
   canShutdown = socket != null;
 
