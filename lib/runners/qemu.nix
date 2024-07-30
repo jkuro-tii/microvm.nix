@@ -149,7 +149,7 @@ let
 in {
   inherit tapMultiQueue;
 
-  command = let tmp = lib.escapeShellArgs (
+  command = lib.escapeShellArgs (
     [
       "${qemu}/bin/qemu-system-${arch}"
       "-name" hostName
@@ -289,7 +289,7 @@ in {
     ]
     ++
     extraArgs
-  ); in builtins.trace (">>>command = " + (builtins.toString tmp)) tmp;
+  );
 
   canShutdown = socket != null;
 
